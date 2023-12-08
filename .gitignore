@@ -1,3 +1,5 @@
-pretrained_checkpoint/
-sam_venv/
 **/__pycache__/
+sam_venv/
+
+pretrained_checkpoint/
+train/data/
