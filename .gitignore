@@ -1,5 +1,7 @@
 **/__pycache__/
 sam_venv/
+.venv
 
 pretrained_checkpoint/
 train/data/
+train_output.txt

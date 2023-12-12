@@ -77,11 +77,12 @@ class MaskDecoderHQ(MaskDecoder):
                         activation=nn.GELU,
                         iou_head_depth= 3,
                         iou_head_hidden_dim= 256,)
-        assert model_type in ["vit_b","vit_l","vit_h"]
+        assert model_type in ["vit_b","vit_l","vit_h", "vit_tiny"]
         
-        checkpoint_dict = {"vit_b":"pretrained_checkpoint/sam_vit_b_maskdecoder.pth",
-                           "vit_l":"pretrained_checkpoint/sam_vit_l_maskdecoder.pth",
-                           'vit_h':"pretrained_checkpoint/sam_vit_h_maskdecoder.pth"}
+        checkpoint_dict = {"vit_b":"../pretrained_checkpoint/sam_vit_b_maskdecoder.pth",
+                           "vit_l":"../pretrained_checkpoint/sam_vit_l_maskdecoder.pth",
+                           "vit_h":"../pretrained_checkpoint/sam_vit_h_maskdecoder.pth",
+                           "vit_tiny":"../pretrained_checkpoint/sam_vit_l_maskdecoder.pth"}
         checkpoint_path = checkpoint_dict[model_type]
         self.load_state_dict(torch.load(checkpoint_path))
         print("HQ Decoder init from SAM MaskDecoder")
@@ -89,7 +90,7 @@ class MaskDecoderHQ(MaskDecoder):
             p.requires_grad = False
 
         transformer_dim=256
-        vit_dim_dict = {"vit_b":768,"vit_l":1024,"vit_h":1280}
+        vit_dim_dict = {"vit_b":768,"vit_l":1024,"vit_h":1280, "vit_tiny": 1024}
         vit_dim = vit_dim_dict[model_type]
 
         self.hf_token = nn.Embedding(1, transformer_dim)
@@ -275,7 +276,7 @@ def get_args_parser():
     parser.add_argument("--output", type=str, required=True, 
                         help="Path to the directory where masks and checkpoints will be output")
     parser.add_argument("--model-type", type=str, default="vit_l", 
-                        help="The type of model to load, in ['vit_h', 'vit_l', 'vit_b']")
+                        help="The type of model to load, in ['vit_h', 'vit_l', 'vit_b', 'vit_tiny']")
     parser.add_argument("--checkpoint", type=str, required=True, 
                         help="The path to the SAM checkpoint to use for mask generation.")
     parser.add_argument("--device", type=str, default="cuda", 
@@ -296,6 +297,7 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--rank', default=0, type=int,
                         help='number of distributed processes')
+    parser.add_argument('--local-rank', type=int, help='local rank for dist')
     parser.add_argument('--local_rank', type=int, help='local rank for dist')
     parser.add_argument('--find_unused_params', action='store_true')
 
@@ -685,8 +687,22 @@ if __name__ == "__main__":
                  "im_ext": ".jpg",
                  "gt_ext": ".png"}
 
-    train_datasets = [dataset_dis, dataset_thin, dataset_fss, dataset_duts, dataset_duts_te, dataset_ecssd, dataset_msra]
-    valid_datasets = [dataset_dis_val, dataset_coift_val, dataset_hrsod_val, dataset_thin_val] 
+    # train_datasets = [dataset_dis, dataset_thin, dataset_fss, dataset_duts, dataset_duts_te, dataset_ecssd, dataset_msra]
+    # valid_datasets = [dataset_dis_val, dataset_coift_val, dataset_hrsod_val, dataset_thin_val]
+
+    ft_001_300 = {"name": "ft_001_300",
+                   "im_dir": "./data/fine-tune-001-300/train_images",
+                   "gt_dir": "./data/fine-tune-001-300/train_masks",
+                   "im_ext": ".jpg",
+                   "gt_ext": ".jpg"}
+    ft_001_300_val = {"name": "ft_301_3015_val",
+                        "im_dir": "./data/fine-tune-001-300/test_images",
+                        "gt_dir": "./data/fine-tune-001-300/test_masks",
+                        "im_ext": ".jpg",
+                        "gt_ext": ".jpg"}
+
+    train_datasets = [ft_001_300]
+    valid_datasets = [ft_001_300]
 
     args = get_args_parser()
     net = MaskDecoderHQ(args.model_type) 
