@@ -1,7 +1,9 @@
+.vscode
 **/__pycache__/
 sam_venv/
 .venv
 
 pretrained_checkpoint/
 train/data/
+demo/leaf_prediction
 train_output.txt

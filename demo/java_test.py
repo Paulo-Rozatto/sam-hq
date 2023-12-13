@@ -6,9 +6,12 @@ from segment_anything import sam_model_registry, SamPredictor
 import os
 import sys
 
-sam_checkpoint = "/home/paulo/Desktop/tcc/sam-hq/pretrained_checkpoint/sam_hq_vit_tiny.pth"
-model_type = "vit_tiny"
-device = "gpu"
+# sam_checkpoint = "/home/paulo/Desktop/tcc/sam-hq/pretrained_checkpoint/sam_hq_vit_tiny.pth"
+# model_type = "vit_tiny"
+# sam_checkpoint = "/home/paulo/Desktop/tcc/sam-hq/pretrained_checkpoint/sam_hq_vit_b.pth"
+sam_checkpoint = "/home/paulo/Desktop/tcc/sam-hq/pretrained_checkpoint/test_10.pth"
+model_type = "vit_b"
+device = "cpu"
 
 sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
 sam.to(device=device)
@@ -43,9 +46,17 @@ masks, scores, logits = predictor.predict(
     hq_token_only=hq_token_only,
 )
 
+# leaf_path = "/home/paulo/Desktop/tcc/sam-hq/demo/leaf_prediction"
+# mask_path = os.path.join(leaf_path, os.path.basename(imgePath))
+# mask = masks[0]
+# h, w = mask.shape[-2:]
+# mask_image = mask.reshape(h, w) * 255
+# cv2.imwrite(mask_path, mask_image)
+
+
 # find contours from mask, draw and show image
 contours, _ = cv2.findContours(masks[0].astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 biggest_contour = max(contours, key=cv2.contourArea)
-poly = cv2.approxPolyDP(biggest_contour, 0.0007 * cv2.arcLength(biggest_contour, True), True)
+poly = cv2.approxPolyDP(biggest_contour, 0.00054 * cv2.arcLength(biggest_contour, True), True)
 poly = poly.reshape(poly.shape[0], poly.shape[2]).tolist()
 print(poly)
