@@ -7,3 +7,6 @@ pretrained_checkpoint/
 train/data/
 demo/leaf_prediction
 train_output.txt
+work_dirs/
+evals/
+*.txt
