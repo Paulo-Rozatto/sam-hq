@@ -79,12 +79,12 @@ class MaskDecoderHQ(MaskDecoder):
                         iou_head_hidden_dim= 256,)
         assert model_type in ["vit_b","vit_l","vit_h", "vit_tiny"]
         
-        checkpoint_dict = {"vit_b":"../pretrained_checkpoint/sam_vit_b_maskdecoder.pth",
+        checkpoint_dict = {"vit_b": "/home/fourier/paulo/sam-hq/train/work_dirs/hq_sam_b_001_300/epoch_10.pth",
                            "vit_l":"../pretrained_checkpoint/sam_vit_l_maskdecoder.pth",
                            "vit_h":"../pretrained_checkpoint/sam_vit_h_maskdecoder.pth",
-                           "vit_tiny":"../pretrained_checkpoint/sam_vit_l_maskdecoder.pth"}
+                           "vit_tiny": "../pretrained_checkpoint/sam_vit_l_maskdecoder.pth", }
         checkpoint_path = checkpoint_dict[model_type]
-        self.load_state_dict(torch.load(checkpoint_path))
+        self.load_state_dict(torch.load(checkpoint_path), strict=False)
         print("HQ Decoder init from SAM MaskDecoder")
         for n,p in self.named_parameters():
             p.requires_grad = False
@@ -273,11 +273,11 @@ def show_box(box, ax):
 def get_args_parser():
     parser = argparse.ArgumentParser('HQ-SAM', add_help=False)
 
-    parser.add_argument("--output", type=str, required=True, 
+    parser.add_argument("--output", type=str, required=False,
                         help="Path to the directory where masks and checkpoints will be output")
     parser.add_argument("--model-type", type=str, default="vit_l", 
                         help="The type of model to load, in ['vit_h', 'vit_l', 'vit_b', 'vit_tiny']")
-    parser.add_argument("--checkpoint", type=str, required=True, 
+    parser.add_argument("--checkpoint", type=str, required=False,
                         help="The path to the SAM checkpoint to use for mask generation.")
     parser.add_argument("--device", type=str, default="cuda", 
                         help="The device to run generation on.")
@@ -327,10 +327,7 @@ def main(net, train_datasets, valid_datasets, args):
         print("--- create training dataloader ---")
         train_im_gt_list = get_im_gt_name_dict(train_datasets, flag="train")
         train_dataloaders, train_datasets = create_dataloaders(train_im_gt_list,
-                                                        my_transforms = [
-                                                                    RandomHFlip(),
-                                                                    LargeScaleJitter()
-                                                                    ],
+                                                               my_transforms=[],
                                                         batch_size = args.batch_size_train,
                                                         training = True)
         print(len(train_dataloaders), " train dataloaders created")
@@ -338,9 +335,7 @@ def main(net, train_datasets, valid_datasets, args):
     print("--- create valid dataloader ---")
     valid_im_gt_list = get_im_gt_name_dict(valid_datasets, flag="valid")
     valid_dataloaders, valid_datasets = create_dataloaders(valid_im_gt_list,
-                                                          my_transforms = [
-                                                                        Resize(args.input_size)
-                                                                    ],
+                                                           my_transforms=[],
                                                           batch_size=args.batch_size_valid,
                                                           training=False)
     print(len(valid_dataloaders), " valid dataloaders created")
@@ -700,9 +695,25 @@ if __name__ == "__main__":
                         "gt_dir": "./data/fine-tune-001-300/test_masks",
                         "im_ext": ".jpg",
                         "gt_ext": ".jpg"}
+    val_396_410 = {"name": "val_396_410",
+                   "im_dir": "./data/fullsize-396-410/images",
+                   "gt_dir": "./data/fullsize-396-410/masks",
+                   "im_ext": ".jpg",
+                   "gt_ext": ".jpg"}
+
+    ft_301_330__396_410 = {"name": "ft_301_330__396_410",
+                           "im_dir": "./data/fine-tune-301-330--396-410/train_images",
+                           "gt_dir": "./data/fine-tune-301-330--396-410/train_masks",
+                           "im_ext": ".jpg",
+                           "gt_ext": ".jpg"}
+    ft_301_330__396_410_val = {"name": "ft_301_330__396_410_val",
+                               "im_dir": "./data/fine-tune-301-330--396-410/test_images",
+                               "gt_dir": "./data/fine-tune-301-330--396-410/test_masks",
+                               "im_ext": ".jpg",
+                               "gt_ext": ".jpg"}
 
     train_datasets = [ft_001_300]
-    valid_datasets = [ft_001_300]
+    valid_datasets = [ft_001_300_val]
 
     args = get_args_parser()
     net = MaskDecoderHQ(args.model_type) 
