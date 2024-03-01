@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import cv2
 
@@ -7,6 +8,7 @@ from os.path import join, normpath, basename, exists
 
 IN_PATH = normpath("")
 OUT_PATH = normpath("")
+crop_border = False
 
 
 def random_crop(image, mask, min_crop_size=256, max_crop_size=512):
@@ -23,6 +25,53 @@ def random_crop(image, mask, min_crop_size=256, max_crop_size=512):
     return image, mask
 
 
+def random_crop_border(image, mask, min_crop_size=256, max_crop_size=512):
+    crop_size = np.random.randint(min_crop_size, max_crop_size + 1)
+
+    if crop_size == 1024:
+        return image, mask
+
+    cnt, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    cnt = max(cnt, key=cv2.contourArea)
+    poly = cv2.approxPolyDP(cnt, 0.0005 * cv2.arcLength(cnt, True), True)
+    print(len(poly))
+    poly = poly.reshape(-1, 2)
+
+    idx = np.random.randint(0, len(poly))
+    x, y = poly[idx]
+
+    length = int(crop_size / 2)
+
+    top = y - length
+    bottom = y + length
+
+    left = x - length
+    right = x + length
+
+    if (top < 0):
+        offset = -top
+        top += offset
+        bottom += offset
+    elif (bottom > image.shape[0]):
+        offset = bottom - image.shape[0]
+        top -= offset
+        bottom -= offset
+
+    if (left < 0):
+        offset = -left
+        left += offset
+        right += offset
+    elif (right > image.shape[0]):
+        offset = right - image.shape[0]
+        left -= offset
+        right -= offset
+
+    image = image[top:bottom, left:right]
+    mask = mask[top:bottom, left:right]
+
+    return image, mask
+
+
 def scale_up(image, mask, size=1024):
     image = cv2.resize(image, (size, size), interpolation=cv2.INTER_LINEAR)
     mask = cv2.resize(mask, (size, size), interpolation=cv2.INTER_LINEAR)
@@ -31,8 +80,10 @@ def scale_up(image, mask, size=1024):
 
 def transform(image, mask):
     is_valid_crop = False
+
+    crop_fn = random_crop_border if crop_border else random_crop
     while not is_valid_crop:
-        img, msk = random_crop(image, mask)
+        img, msk = crop_fn(image, mask)
         is_valid_crop = (cv2.countNonZero(msk) / msk.size) > 0.1
 
     img, msk = scale_up(img, msk, 1024)
@@ -46,10 +97,10 @@ def main():
     out_image_dir = join(OUT_PATH, "train_images")
     out_mask_dir = join(OUT_PATH, "train_masks")
 
-    if not exists(out_image_dir):
-        makedirs(out_image_dir)
-    if not exists(out_mask_dir):
-        makedirs(out_mask_dir)
+    # if not exists(out_image_dir):
+    #     makedirs(out_image_dir)
+    # if not exists(out_mask_dir):
+    #     makedirs(out_mask_dir)
 
     for image_path, mask_path in zip(paths_images, paths_masks):
         name = basename(image_path)
@@ -70,4 +121,22 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Random crop and resize bean leaf dataset"
+    )
+
+    parser.add_argument(
+        "-b", "--border", action="store_true"
+    )
+    parser.add_argument("-i", "--in_path", type=str)
+    parser.add_argument("-o", "--out_path", type=str)
+
+    args = parser.parse_args()
+    print(args.in_path)
+
+    if args.in_path is not None:
+        IN_PATH = normpath(args.in_path)
+    if args.out_path is not None:
+        OUT_PATH = normpath(args.out_path)
+
     main()
