@@ -24,7 +24,7 @@ from utils.dataloader import get_im_gt_name_dict, create_dataloaders, RandomHFli
 from utils.loss_mask import loss_masks
 import utils.misc as misc
 
-
+from datetime import datetime
 
 class LayerNorm2d(nn.Module):
     def __init__(self, num_channels: int, eps: float = 1e-6) -> None:
@@ -702,9 +702,11 @@ if __name__ == "__main__":
                         "gt_ext": ".jpg"}
 
     train_datasets = [ft_001_300]
-    valid_datasets = [ft_001_300]
+    valid_datasets = [ft_001_300_val]
 
     args = get_args_parser()
     net = MaskDecoderHQ(args.model_type) 
 
+    print("Start date: ", datetime.now())
     main(net, train_datasets, valid_datasets, args)
+    print("End date: ", datetime.now())
