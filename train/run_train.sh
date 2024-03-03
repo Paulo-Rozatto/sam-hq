@@ -1,2 +1,2 @@
 cd /home/fourier/paulo/sam-hq/train
-nohup python -m torch.distributed.launch --nproc_per_node=1 train.py --checkpoint ../pretrained_checkpoint/sam_vit_b_01ec64.pth --model-type vit_b --output work_dirs/hq_sam_b_001_300 --local_rank 0 --batch_size_train 2 > logs/test_train_output.txt 2>&1 &
+nohup python -m torch.distributed.launch --nproc_per_node=1 train.py --checkpoint ./work_dirs/hq_sam_b_001_300_no_scaling_2/sam_hq_epoch_11.pth --model-type vit_b --output work_dirs/hq_sam_b_001_300_no_scaling_3 --local_rank 0 --batch_size_train 2 > logs/train_output_no_scaling_3.txt 2>&1 &
